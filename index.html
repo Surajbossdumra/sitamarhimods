@@ -1,72 +1,87 @@
-
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sitamarhi Mods Admin Panel</title>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getStorage, ref, uploadBytes, listAll, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyA8xWObvvAWUN-6e3GSnbYgOF2Cv5pfIh8",
-      authDomain: "sitamarhimods.firebaseapp.com",
-      projectId: "sitamarhimods",
-      storageBucket: "sitamarhimods.appspot.com",
-      messagingSenderId: "229965606380",
-      appId: "1:229965606380:web:2c4cd1ef07fca82266a4c9",
-      measurementId: "G-HPQWP6NWFD"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const storage = getStorage(app);
-
-    const uploadForm = document.getElementById("uploadForm");
-    const fileInput = document.getElementById("fileInput");
-    const status = document.getElementById("status");
-    const apkList = document.getElementById("apkList");
-
-    uploadForm.onsubmit = async (e) => {
-      e.preventDefault();
-      const file = fileInput.files[0];
-      if (!file) return;
-      const storageRef = ref(storage, `apks/${file.name}`);
-      await uploadBytes(storageRef, file);
-      status.textContent = `✅ Uploaded: ${file.name}`;
-      loadApkList();
-    };
-
-    async function loadApkList() {
-      apkList.innerHTML = "Loading...";
-      const listRef = ref(storage, 'apks/');
-      const result = await listAll(listRef);
-      apkList.innerHTML = "";
-      for (const itemRef of result.items) {
-        const url = await getDownloadURL(itemRef);
-        const li = document.createElement("li");
-        li.innerHTML = `<a href="${url}" download>${itemRef.name}</a>`;
-        apkList.appendChild(li);
+<html>
+  <head>
+    <title>Sitamarhi Mods Admin Panel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+      body {
+        background-color: #121212;
+        color: white;
+        font-family: Arial, sans-serif;
+        padding: 20px;
       }
-    }
+      input, button {
+        margin-top: 10px;
+        padding: 10px;
+        font-size: 16px;
+      }
+      a {
+        color: #4fc3f7;
+      }
+    </style>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+  </head>
+  <body>
+    <h1>Sitamarhi Mods Admin Panel</h1>
+    <input type="file" id="fileInput" />
+    <button onclick="uploadFile()">Upload APK</button>
 
-    loadApkList();
-  </script>
-  <style>
-    body { background: #111; color: #fff; font-family: sans-serif; padding: 20px; }
-    input, button { padding: 10px; margin: 10px 0; }
-    ul { list-style: none; padding: 0; }
-    li a { color: #4fc3f7; text-decoration: none; }
-  </style>
-</head>
-<body>
-  <h1>Sitamarhi Mods Admin Panel</h1>
-  <form id="uploadForm">
-    <input type="file" id="fileInput" accept=".apk" required />
-    <button type="submit">Upload APK</button>
-  </form>
-  <div id="status"></div>
-  <h2>Uploaded APKs</h2>
-  <ul id="apkList"></ul>
-</body>
+    <h2>Uploaded APKs</h2>
+    <ul id="fileList">Loading...</ul>
+
+    <script>
+      // Your Firebase config
+      const firebaseConfig = {
+        apiKey: "AIzaSyA8xWObvvAWUN-6e3GSnbYgOF2Cv5pfIh8",
+        authDomain: "sitamarhimods.firebaseapp.com",
+        projectId: "sitamarhimods",
+        storageBucket: "sitamarhimods.firebasestorage.app",
+        messagingSenderId: "229965606380",
+        appId: "1:229965606380:web:2c4cd1ef07fca82266a4c9",
+        measurementId: "G-HPQWP6NWFD"
+      };
+
+      firebase.initializeApp(firebaseConfig);
+      const storage = firebase.storage();
+      const fileList = document.getElementById("fileList");
+
+      function listFiles() {
+        const listRef = storage.ref();
+        listRef.listAll().then((res) => {
+          fileList.innerHTML = "";
+          res.items.forEach((itemRef) => {
+            itemRef.getDownloadURL().then((url) => {
+              const li = document.createElement("li");
+              li.innerHTML = `<a href="${url}" target="_blank">${itemRef.name}</a>`;
+              fileList.appendChild(li);
+            });
+          });
+        }).catch((error) => {
+          fileList.innerHTML = "Error loading files.";
+          console.error(error);
+        });
+      }
+
+      function uploadFile() {
+        const file = document.getElementById("fileInput").files[0];
+        if (!file) {
+          alert("Please select a file.");
+          return;
+        }
+        const fileRef = storage.ref(file.name);
+        fileRef.put(file).then(() => {
+          alert("Upload successful!");
+          listFiles();
+        }).catch((error) => {
+          alert("Upload failed!");
+          console.error(error);
+        });
+      }
+
+      // Load files on page load
+      listFiles();
+    </script>
+  </body>
 </html>
